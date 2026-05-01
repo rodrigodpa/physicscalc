@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Simulador de Física</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.app {
+    background: #020617;
+    padding: 25px;
+    border-radius: 16px;
+    width: 340px;
+    box-shadow: 0 0 30px rgba(56,189,248,0.2);
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 10px;
+    color: #38bdf8;
+}
+
+select, input {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 10px;
+    border: 1px solid #1e293b;
+    background: #020617;
+    color: white;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+}
+
+button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #38bdf8;
+    color: #020617;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #0ea5e9;
+    transform: scale(1.03);
+}
+
+#resultado {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #22c55e;
+    min-height: 24px;
+}
+
+.erro {
+    color: #ef4444;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+    <h1>Simulador</h1>
+
+    <select id="modo" onchange="renderInputs()">
+        <option value="1">Plano Inclinado</option>
+        <option value="2">Trabalho</option>
+        <option value="3">Decompor Força</option>
+        <option value="4">Força Necessária</option>
+    </select>
+
+    <div id="inputs"></div>
+
+    <button onclick="calcular()">Calcular</button>
+
+    <div id="resultado"></div>
+</div>
+
+<script>
+const g = 9.81;
+
+function input(id, placeholder) {
+    return `<input id="${id}" placeholder="${placeholder}">`;
+}
+
+function renderInputs() {
+    let modo = document.getElementById("modo").value;
+    let div = document.getElementById("inputs");
+
+    if (modo == "1") {
+        div.innerHTML =
+            input("m","Massa (kg)") +
+            input("f","Força horizontal (N)") +
+            input("mie","Atrito estático") +
+            input("mic","Atrito cinético") +
+            input("ang","Ângulo (°)");
+    }
+
+    if (modo == "2") {
+        div.innerHTML =
+            input("F","Força (N)") +
+            input("d","Deslocamento (m)") +
+            input("ang","Ângulo (°)");
+    }
+
+    if (modo == "3") {
+        div.innerHTML =
+            input("F","Força (N)") +
+            input("ang","Ângulo (°)");
+    }
+
+    if (modo == "4") {
+        div.innerHTML =
+            input("m","Massa (kg)") +
+            input("a","Aceleração (m/s²)") +
+            input("mie","Atrito estático") +
+            input("mic","Atrito cinético") +
+            input("ang","Ângulo (°)");
+    }
+}
+
+function get(id) {
+    let el = document.getElementById(id);
+    if (!el) throw "campo não existe";
+    let val = parseFloat(el.value);
+    if (isNaN(val)) throw "Preencha todos os campos corretamente";
+    return val;
+}
+
+function mostrar(msg, erro=false) {
+    let res = document.getElementById("resultado");
+    res.innerText = msg;
+    res.className = erro ? "erro" : "";
+}
+
+function calcular() {
+    try {
+        let modo = document.getElementById("modo").value;
+
+        if (modo == "1") {
+            let m = get("m");
+            let f = get("f");
+            let mie = get("mie");
+            let mic = get("mic");
+            let ang = get("ang");
+
+            let rad = ang * Math.PI / 180;
+            let Px = m*g*Math.sin(rad);
+            let Py = m*g*Math.cos(rad);
+            let N = Py;
+
+            let Fate = mie*N;
+            let Fatc = mic*N;
+
+            let F = f*Math.cos(rad);
+            let Ft = F - Px;
+
+            if (Math.abs(Ft) <= Fate) {
+                mostrar("Objeto não se move");
+            } else {
+                let a = Ft > 0 ?
+                    (F - Px - Fatc)/m :
+                    (F - Px + Fatc)/m;
+
+                mostrar(`Aceleração: ${a.toFixed(2)} m/s²`);
+            }
+        }
+
+        if (modo == "2") {
+            let F = get("F");
+            let d = get("d");
+            let ang = get("ang");
+
+            let W = F*d*Math.cos(ang*Math.PI/180);
+            mostrar(`Trabalho: ${W.toFixed(2)} J`);
+        }
+
+        if (modo == "3") {
+            let F = get("F");
+            let ang = get("ang");
+
+            let Fx = F*Math.cos(ang*Math.PI/180);
+            let Fy = F*Math.sin(ang*Math.PI/180);
+
+            mostrar(`Fx: ${Fx.toFixed(2)} N | Fy: ${Fy.toFixed(2)} N`);
+        }
+
+        if (modo == "4") {
+            let m = get("m");
+            let a = get("a");
+            let mie = get("mie");
+            let mic = get("mic");
+            let ang = get("ang");
+
+            let rad = ang*Math.PI/180;
+            let Px = m*g*Math.sin(rad);
+            let Py = m*g*Math.cos(rad);
+            let N = Py;
+
+            let Fatc = mic*N;
+            let Fate = mie*N;
+
+            if (ang == 0) {
+                if (a == 0) {
+                    mostrar(`Equilíbrio: 0 até ${Fate.toFixed(2)} N`);
+                } else {
+                    let F = a>0 ? m*a + Fatc : m*a - Fatc;
+                    mostrar(`Força: ${F.toFixed(2)} N`);
+                }
+            } else {
+                if (a > 0) {
+                    let F = m*a + Px + Fatc;
+                    if ((F - Px) < Fate) {
+                        mostrar("Força insuficiente", true);
+                    } else {
+                        mostrar(`Força: ${F.toFixed(2)} N`);
+                    }
+                } else if (a < 0) {
+                    let F = m*a + Px - Fatc;
+                    mostrar(`Força: ${F.toFixed(2)} N`);
+                } else {
+                    let min = Px - Fate;
+                    let max = Px + Fate;
+                    mostrar(`Equilíbrio: ${min.toFixed(2)} a ${max.toFixed(2)} N`);
+                }
+            }
+        }
+
+    } catch(e) {
+        mostrar(e, true);
+    }
+}
+
+renderInputs();
+</script>
+
+</body>
+</html>
