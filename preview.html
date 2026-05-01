@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Simulador de Física</title>
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #111;
+    color: white;
+}
+input, select, button {
+    margin: 5px;
+    padding: 8px;
+}
+.container {
+    margin-top: 20px;
+}
+</style>
+</head>
+<body>
+
+<h1>Simulador de Física</h1>
+
+<select id="modo" onchange="mudarModo()">
+    <option value="1">Plano Inclinado</option>
+    <option value="2">Trabalho</option>
+    <option value="3">Decompor Força</option>
+    <option value="4">Força Necessária</option>
+</select>
+
+<div class="container" id="inputs"></div>
+
+<button onclick="calcular()">Calcular</button>
+
+<h2 id="resultado"></h2>
+
+<script>
+function criarInput(id, placeholder) {
+    return `<input id="${id}" placeholder="${placeholder}"><br>`;
+}
+
+function mudarModo() {
+    let modo = document.getElementById("modo").value;
+    let div = document.getElementById("inputs");
+
+    if (modo == "1") {
+        div.innerHTML =
+            criarInput("m", "Massa (kg)") +
+            criarInput("f", "Força horizontal (N)") +
+            criarInput("mie", "Atrito estático") +
+            criarInput("mic", "Atrito cinético") +
+            criarInput("ang", "Ângulo (°)");
+    }
+
+    if (modo == "2") {
+        div.innerHTML =
+            criarInput("F", "Força (N)") +
+            criarInput("d", "Deslocamento (m)") +
+            criarInput("ang", "Ângulo (°)");
+    }
+
+    if (modo == "3") {
+        div.innerHTML =
+            criarInput("F", "Força (N)") +
+            criarInput("ang", "Ângulo (°)");
+    }
+
+    if (modo == "4") {
+        div.innerHTML =
+            criarInput("m", "Massa (kg)") +
+            criarInput("a", "Aceleração (m/s²)") +
+            criarInput("mie", "Atrito estático") +
+            criarInput("mic", "Atrito cinético") +
+            criarInput("ang", "Ângulo (°)");
+    }
+}
+
+function calcular() {
+    let modo = document.getElementById("modo").value;
+    let g = 9.81;
+
+    try {
+
+    if (modo == "1") {
+        let m = parseFloat(m.value);
+        let f = parseFloat(f.value);
+        let mie = parseFloat(mie.value);
+        let mic = parseFloat(mic.value);
+        let ang = parseFloat(ang.value);
+
+        let rad = ang * Math.PI / 180;
+
+        let Px = m * g * Math.sin(rad);
+        let Py = m * g * Math.cos(rad);
+
+        let N = Py;
+        let Fate_max = mie * N;
+        let Fatc = mic * N;
+
+        let F = f * Math.cos(rad);
+        let F_tend = F - Px;
+
+        if (Math.abs(F_tend) <= Fate_max) {
+            resultado.innerText = "O objeto não se move";
+        } else {
+            let a = F_tend > 0 ?
+                (F - Px - Fatc) / m :
+                (F - Px + Fatc) / m;
+
+            resultado.innerText = `Aceleração: ${a.toFixed(2)} m/s²`;
+        }
+    }
+
+    if (modo == "2") {
+        let F = parseFloat(F.value);
+        let d = parseFloat(d.value);
+        let ang = parseFloat(ang.value);
+
+        let W = F * d * Math.cos(ang * Math.PI / 180);
+        resultado.innerText = `Trabalho: ${W.toFixed(2)} J`;
+    }
+
+    if (modo == "3") {
+        let F = parseFloat(F.value);
+        let ang = parseFloat(ang.value);
+
+        let Fx = F * Math.cos(ang * Math.PI / 180);
+        let Fy = F * Math.sin(ang * Math.PI / 180);
+
+        resultado.innerText = `Fx = ${Fx.toFixed(2)} N | Fy = ${Fy.toFixed(2)} N`;
+    }
+
+    if (modo == "4") {
+        let m = parseFloat(m.value);
+        let a = parseFloat(a.value);
+        let mie = parseFloat(mie.value);
+        let mic = parseFloat(mic.value);
+        let ang = parseFloat(ang.value);
+
+        let rad = ang * Math.PI / 180;
+
+        let Px = m * g * Math.sin(rad);
+        let Py = m * g * Math.cos(rad);
+
+        let N = Py;
+        let Fatc = mic * N;
+        let Fate_max = mie * N;
+
+        if (ang == 0) {
+            if (a == 0) {
+                resultado.innerText = `Entre 0 e ${Fate_max.toFixed(2)} N mantém parado`;
+            } else {
+                let F = a > 0 ? m*a + Fatc : m*a - Fatc;
+                resultado.innerText = `Força: ${F.toFixed(2)} N`;
+            }
+        } else {
+            if (a > 0) {
+                let F = m*a + Px + Fatc;
+                if ((F - Px) < Fate_max) {
+                    resultado.innerText = "Força insuficiente para mover";
+                } else {
+                    resultado.innerText = `Força para subir: ${F.toFixed(2)} N`;
+                }
+            }
+            else if (a < 0) {
+                let F = m*a + Px - Fatc;
+                resultado.innerText = `Força: ${F.toFixed(2)} N`;
+            }
+            else {
+                let min = Px - Fate_max;
+                let max = Px + Fate_max;
+                resultado.innerText = `Equilíbrio entre ${min.toFixed(2)} e ${max.toFixed(2)} N`;
+            }
+        }
+    }
+
+    } catch {
+        resultado.innerText = "Erro nos dados";
+    }
+}
+
+mudarModo();
+</script>
+
+</body>
+</html>
